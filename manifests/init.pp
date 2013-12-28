@@ -56,6 +56,7 @@ class nginx (
   $nginx_upstreams        = {},
   $nginx_locations        = {},
   $manage_repo            = $nginx::params::manage_repo,
+  $mange_service          = $nginx::params::manage_service,
 ) inherits nginx::params {
 
   include stdlib
@@ -87,12 +88,19 @@ class nginx (
     nginx_error_log       => $nginx_error_log,
     http_access_log       => $http_access_log,
     require               => Class['nginx::package'],
-    notify                => Class['nginx::service'],
   }
 
-  class { 'nginx::service':
-    configtest_enable => $configtest_enable,
-    service_restart   => $service_restart,
+  if $manage_service {
+    Class['nginx::config'] ~>
+    class { 'nginx::service':
+      configtest_enable => $configtest_enable,
+      service_restart   => $service_restart,
+    }
+    -> Anchor['nginx::end']
+    Anchor['nginx::begin'] ~> Class['nginx::service']
+  }
+  else {
+    Class['nginx::config'] -> Anchor['nginx::end']
   }
 
   validate_hash($nginx_upstreams)
@@ -107,9 +115,7 @@ class nginx (
   # a transitive relationship to the composite class.
   anchor{ 'nginx::begin':
     before => Class['nginx::package'],
-    notify => Class['nginx::service'],
   }
-  anchor { 'nginx::end':
-    require => Class['nginx::service'],
-  }
+  anchor { 'nginx::end': }
 }
+

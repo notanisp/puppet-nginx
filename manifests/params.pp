@@ -102,4 +102,5 @@ class nginx::params {
   $package_ensure = 'present'
   $package_source = 'nginx'
   $manage_repo    = true
+  $manage_service = true
 }
