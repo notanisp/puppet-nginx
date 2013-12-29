@@ -127,7 +127,11 @@ define nginx::resource::location (
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
-    notify => Class['nginx::service'],
+  }
+  if str2bool($nginx::manage_service) {
+    File {
+      notify => Class['nginx::service'],
+    }
   }
 
   validate_array($index_files)

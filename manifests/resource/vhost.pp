@@ -174,7 +174,6 @@ define nginx::resource::vhost (
       'absent' => absent,
       default  => 'file',
     },
-    notify => Class['nginx::service'],
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
@@ -209,7 +208,9 @@ define nginx::resource::vhost (
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
-    notify => Class['nginx::service'],
+  }
+  if str2bool($nginx::manage_service) {
+    Concat[$config_file] ~> Class['nginx::service']
   }
 
   if ($ssl == true) and ($ssl_port == $listen_port) {
@@ -239,7 +240,9 @@ define nginx::resource::vhost (
       www_root            => $www_root,
       index_files         => [],
       location_custom_cfg => $location_custom_cfg,
-      notify              => Class['nginx::service'],
+    }
+    if str2bool($nginx::manage_service) {
+      Nginx::Resource::Location["${name_sanitized}-default"] ~> Class['nginx::service']
     }
   } else {
     $root = $www_root
@@ -261,6 +264,9 @@ define nginx::resource::vhost (
       ensure  => present,
       mode    => '0770',
       content => template('nginx/vhost/fastcgi_params.erb'),
+    }
+    if str2bool($nginx::manage_service) {
+      File['/etc/nginx/fastcgi_params'] ~> Class['nginx::service']
     }
   }
 
@@ -326,6 +332,9 @@ define nginx::resource::vhost (
     path    => "${vhost_enable_dir}/${name_sanitized}.conf",
     target  => $config_file,
     require => Concat[$config_file],
-    notify  => Service['nginx'],
+  }
+  if str2bool($nginx::manage_service) {
+    File["${name_sanitized}.conf symlink"] ~> Class['nginx::service']
   }
 }
+

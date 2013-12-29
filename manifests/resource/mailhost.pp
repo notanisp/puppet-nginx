@@ -86,7 +86,9 @@ define nginx::resource::mailhost (
     owner  => 'root',
     group  => 'root',
     mode   => '0644',
-    notify => Class['nginx::service'],
+  }
+  if str2bool($nginx::manage_service) {
+    Concat[$config_file] ~> Class['nginx::service']
   }
 
   if ($listen_port != $ssl_port) {

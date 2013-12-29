@@ -53,6 +53,9 @@ define nginx::resource::upstream (
       default  => 'file',
     },
     content => template('nginx/conf.d/upstream.erb'),
-    notify  => Class['nginx::service'],
+  }
+  if str2bool($nginx::manage_service) {
+    File["/etc/nginx/conf.d/${name}-upstream.conf"] ~> Class['nginx::service']
   }
 }
+
